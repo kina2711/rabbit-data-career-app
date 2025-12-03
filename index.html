@@ -80,8 +80,8 @@
         // --- API CALLING LOGIC (VERCEL PROXY) ---
         async function callGeminiAPI(prompt) {
             try {
-                // Gọi tới Serverless Function của Vercel tại /api/chat
-                const response = await fetch('/chat', {
+                // Gọi tới Serverless Function của Vercel tại /chat
+                const response = await fetch('/chat.js', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: prompt })
