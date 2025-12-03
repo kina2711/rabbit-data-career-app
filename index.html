@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lộ Trình & Vòng Đời Data AI Chuyên Sâu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lộ Trình & Vòng Đời Data AI (Mobile Optimized)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -24,25 +24,31 @@
         }
     </script>
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        
+        /* Ẩn scrollbar nhưng vẫn cuộn được (cho mobile đẹp hơn) */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        .tab-btn { position: relative; transition: all 0.3s ease; }
+
+        .tab-btn { position: relative; transition: all 0.3s ease; white-space: nowrap; }
         .tab-btn::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0%; height: 2px; background-color: currentColor; transition: width 0.3s ease; }
         .tab-btn.active::after { width: 100%; }
+
+        /* Timeline & Lifecycle Styles */
         .timeline-line::before { content: ''; position: absolute; top: 2rem; bottom: -2rem; left: 15px; width: 2px; background-color: #e2e8f0; z-index: 0; }
         .timeline-item:last-child .timeline-line::before { display: none; }
+        
         .lifecycle-arrow::after { content: '→'; position: absolute; right: -20px; top: 50%; transform: translateY(-50%); color: #cbd5e1; font-size: 1.5rem; font-weight: 300; }
         .lifecycle-item:last-child .lifecycle-arrow::after { display: none; }
-        @media (max-width: 768px) { .lifecycle-arrow::after { content: '↓'; right: 50%; top: auto; bottom: -25px; transform: translateX(50%); } }
+        @media (max-width: 768px) { .lifecycle-arrow::after { display: none; } } /* Ẩn mũi tên trên mobile để đỡ rối */
+
+        /* AI Chat Styles */
         .ai-response ul { list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem; }
         .ai-response li { margin-bottom: 0.25rem; }
         .ai-response strong { color: #0f172a; font-weight: 700; }
-        .ai-response p { margin-bottom: 0.75rem; }
         .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
@@ -50,190 +56,485 @@
     </style>
 </head>
 <body class="text-slate-700">
-    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+
+    <!-- Navbar -->
+    <nav class="bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold">D</div>
+                    <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">D</div>
                     <span class="text-xl font-bold text-slate-900 tracking-tight">Data<span class="text-sky-600">Map</span></span>
                 </div>
-                <div class="hidden md:flex space-x-8" id="nav-tabs"></div>
-                <div class="md:hidden text-slate-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex space-x-6" id="nav-tabs-desktop"></div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-slate-600 hover:text-slate-900 p-2 focus:outline-none">
+                        <svg id="menu-icon" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        <svg id="close-icon" class="w-7 h-7 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
             </div>
         </div>
+
+        <!-- Mobile Menu Overlay -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-16 left-0 w-full bg-white border-b border-slate-200 shadow-xl animate-fade-in">
+            <div class="flex flex-col p-4 space-y-2" id="nav-tabs-mobile">
+                <!-- Mobile tabs injected by JS -->
+            </div>
+        </div>
     </nav>
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-screen">
-        <header class="text-center mb-12 animate-fade-in">
-            <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4">Từ <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-600">Zero</span> đến <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-purple-600">Hero</span> ngành Data</h1>
-            <p class="text-slate-500 max-w-2xl mx-auto text-lg">Bản đồ tư duy toàn diện, kết nối kỹ năng, công cụ và quy trình thực tế.</p>
-        </header>
-        <div id="app-container" class="animate-fade-in"></div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 min-h-screen">
+        <!-- Dynamic Content -->
+        <div id="app-container" class="animate-fade-in pb-10"></div>
     </main>
-    <footer class="border-t border-slate-200 mt-20 py-8 bg-white">
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 py-8 bg-white mt-auto">
         <div class="max-w-7xl mx-auto px-4 text-center text-slate-400 text-sm">
-            <p>© 2025 Data Career Navigator. Powered by Rabbit.</p>
+            <p>© 2025 Data Career Navigator. Mobile Optimized.</p>
         </div>
     </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- API CALLING LOGIC (VERCEL PROXY) ---
+        // --- API & DATA STORE (Giữ nguyên như cũ) ---
         async function callGeminiAPI(prompt) {
             try {
-                // Gọi tới Serverless Function của Vercel tại /chat
-                const response = await fetch('/chat.js', {
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: prompt })
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Lỗi server: ${response.status}`);
-                }
-                
+                if (!response.ok) throw new Error("Lỗi kết nối");
                 const data = await response.json();
                 return data.reply;
             } catch (error) {
-                console.error("API Error:", error);
-                return `⚠️ Không thể kết nối với AI Mentor. Lỗi: ${error.message}. (Hãy đảm bảo bạn đã cấu hình biến môi trường GEMINI_API_KEY trên Vercel).`;
+                return "⚠️ Lỗi kết nối AI. Vui lòng kiểm tra lại mạng.";
             }
         }
 
-        // --- DATA STORE & LOGIC ---
         const data = {
             overview: {
                 roles: [
-                    { id: 'DE', name: 'Data Engineer', color: 'de', icon: '⚙️', focus: 'Hạ tầng & Pipeline', desc: 'Người vận chuyển dữ liệu. Đảm bảo dữ liệu sạch và tin cậy.' },
-                    { id: 'DA', name: 'Data Analyst', color: 'da', icon: '📊', focus: 'Phân tích & Báo cáo', desc: 'Người kể chuyện. Biến dữ liệu thô thành insights.' },
-                    { id: 'DS', name: 'Data Scientist', color: 'ds', icon: '🤖', focus: 'Mô hình hóa', desc: 'Nhà tiên tri. Dùng toán học để dự đoán tương lai.' }
+                    { id: 'DE', name: 'Data Engineer', color: 'de', icon: '⚙️', focus: 'Hạ tầng & Pipeline', desc: 'Xây dựng đường ống dữ liệu, đảm bảo data sạch và sẵn sàng.' },
+                    { id: 'DA', name: 'Data Analyst', color: 'da', icon: '📊', focus: 'Phân tích & Báo cáo', desc: 'Biến số liệu thô thành insights để ra quyết định kinh doanh.' },
+                    { id: 'DS', name: 'Data Scientist', color: 'ds', icon: '🤖', focus: 'Mô hình hóa AI', desc: 'Dùng toán và thuật toán để dự đoán tương lai.' }
                 ]
             },
             roadmap: {
                 base: [
-                    { title: 'Toán & Thống kê', items: ['Đại số tuyến tính', 'Giải tích', 'Xác suất'], icon: '∑' },
-                    { title: 'Computer Science', items: ['Cấu trúc dữ liệu', 'SQL', 'Bash/Linux'], icon: '💻' },
-                    { title: 'Tư duy', items: ['Critical Thinking', 'Business Domain', 'Data Ethics'], icon: '🧠' }
+                    { title: 'Toán & Thống kê', items: ['Đại số tuyến tính', 'Xác suất', 'Thống kê'], icon: '∑' },
+                    { title: 'Computer Science', items: ['SQL', 'Python', 'Git/Bash'], icon: '💻' },
+                    { title: 'Tư duy', items: ['Critical Thinking', 'Business Domain'], icon: '🧠' }
                 ],
                 paths: {
-                    DA: [{ stage: 'Xử lý', content: 'Excel, SQL, Python (Pandas)' }, { stage: 'Trực quan hóa', content: 'PowerBI/Tableau, Storytelling' }, { stage: 'Phân tích', content: 'A/B Testing, Cohort, RFM' }],
-                    DE: [{ stage: 'Lập trình', content: 'Python/Java, Docker, Linux' }, { stage: 'Big Data', content: 'Hadoop, Spark, Warehouse' }, { stage: 'Orchestration', content: 'Airflow, dbt, CI/CD' }],
-                    DS: [{ stage: 'ML', content: 'Scikit-learn, Feature Eng' }, { stage: 'Deep Learning', content: 'TensorFlow/PyTorch, NLP' }, { stage: 'MLOps', content: 'Deployment, Monitoring' }]
+                    DA: [{ stage: 'Xử lý', content: 'Excel, SQL, Pandas' }, { stage: 'Trực quan', content: 'PowerBI, Tableau' }, { stage: 'Phân tích', content: 'A/B Test, RFM' }],
+                    DE: [{ stage: 'Coding', content: 'Python, Docker, Linux' }, { stage: 'Big Data', content: 'Spark, Kafka, Hadoop' }, { stage: 'Cloud', content: 'AWS, Airflow, dbt' }],
+                    DS: [{ stage: 'ML', content: 'Sklearn, Regression' }, { stage: 'Deep Learning', content: 'PyTorch, NLP, CV' }, { stage: 'MLOps', content: 'Deploy Model, API' }]
                 }
             },
             lifecycle: [
-                { id: 'ingest', step: '01', title: 'Ingestion', role: 'DE', short: 'Thu thập', desc: 'Đưa dữ liệu từ nguồn về hệ thống.', tech: [{name: 'Kafka', type:'Streaming', pros:'Real-time', cons:'Khó'}, {name:'Airbyte', type:'EL', pros:'Dễ dùng', cons:'Resource'}], mindset: 'Reliability: Dữ liệu có về đủ không?' },
-                { id: 'store', step: '02', title: 'Storage', role: 'DE', short: 'Lưu trữ', desc: 'Lưu dữ liệu thô (Raw) giá rẻ.', tech: [{name: 'S3', type:'Object', pros:'Rẻ', cons:'Query chậm'}, {name:'HDFS', type:'DFS', pros:'Big Data', cons:'Phức tạp'}], mindset: 'Scalability: Mở rộng dễ không?' },
-                { id: 'process', step: '03', title: 'Transform', role: 'DE', short: 'Xử lý', desc: 'Làm sạch và chuyển đổi.', tech: [{name: 'Spark', type:'Compute', pros:'Mạnh', cons:'Tốn RAM'}, {name:'dbt', type:'Transform', pros:'SQL-based', cons:'Cần DW'}], mindset: 'Quality: Dữ liệu sạch là gì?' },
-                { id: 'analyze', step: '04', title: 'Analytics', role: 'DA', short: 'Phân tích', desc: 'Tìm Insight và báo cáo.', tech: [{name: 'PowerBI', type:'BI', pros:'Rẻ', cons:'Học DAX'}, {name:'Metabase', type:'BI', pros:'Free', cons:'Basic'}], mindset: 'Actionable: Ra quyết định gì?' },
-                { id: 'predict', step: '05', title: 'AI & ML', role: 'DS', short: 'Dự báo', desc: 'Training mô hình dự báo.', tech: [{name: 'Sklearn', type:'Lib', pros:'Chuẩn', cons:'No GPU'}, {name:'PyTorch', type:'DL', pros:'Mạnh', cons:'Khó'}], mindset: 'Experimentation: Chấp nhận thử sai.' }
+                { id: 'ingest', step: '01', title: 'Ingestion', role: 'DE', short: 'Thu thập', desc: 'Kéo dữ liệu từ nguồn (API, Logs) về.', tech: [{name: 'Kafka', type:'Stream', pros:'Nhanh', cons:'Khó'}, {name:'Airbyte', type:'EL', pros:'Dễ', cons:'Resource'}], mindset: 'Reliability' },
+                { id: 'store', step: '02', title: 'Storage', role: 'DE', short: 'Lưu trữ', desc: 'Lưu trữ thô giá rẻ (Data Lake).', tech: [{name: 'S3', type:'Object', pros:'Rẻ', cons:'Query chậm'}, {name:'Snowflake', type:'DW', pros:'Mạnh', cons:'Đắt'}], mindset: 'Scalability' },
+                { id: 'process', step: '03', title: 'Transform', role: 'DE', short: 'Xử lý', desc: 'Làm sạch và chuẩn hóa.', tech: [{name: 'Spark', type:'Compute', pros:'Big Data', cons:'Tốn RAM'}, {name:'dbt', type:'SQL', pros:'Clean', cons:'Cần DW'}], mindset: 'Quality' },
+                { id: 'analyze', step: '04', title: 'Analytics', role: 'DA', short: 'Phân tích', desc: 'Tìm Insight và báo cáo.', tech: [{name: 'PowerBI', type:'BI', pros:'Windows', cons:'DAX khó'}, {name:'Tableau', type:'BI', pros:'Đẹp', cons:'Đắt'}], mindset: 'Actionable' },
+                { id: 'predict', step: '05', title: 'AI & ML', role: 'DS', short: 'Dự báo', desc: 'Training mô hình AI.', tech: [{name: 'Sklearn', type:'ML', pros:'Chuẩn', cons:'No GPU'}, {name:'PyTorch', type:'DL', pros:'Mạnh', cons:'Khó'}], mindset: 'Experimentation' }
             ]
         };
 
-        let state = { tab: 'overview', roadmapRole: 'DA', lifecycleStepIndex: 0, chatHistory: [] };
+        // --- STATE MANAGEMENT ---
+        let state = { tab: 'overview', roadmapRole: 'DA', lifecycleStepIndex: 0, chatHistory: [], mobileMenuOpen: false };
+
+        // --- MOBILE UI FUNCTIONS ---
+        function toggleMobileMenu() {
+            state.mobileMenuOpen = !state.mobileMenuOpen;
+            const menu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+
+            if (state.mobileMenuOpen) {
+                menu.classList.remove('hidden');
+                menuIcon.classList.add('hidden');
+                closeIcon.classList.remove('hidden');
+            } else {
+                menu.classList.add('hidden');
+                menuIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+            }
+        }
+
+        function setTab(tabId) {
+            state.tab = tabId;
+            state.mobileMenuOpen = false; // Close menu on select
+            document.getElementById('mobile-menu').classList.add('hidden');
+            document.getElementById('menu-icon').classList.remove('hidden');
+            document.getElementById('close-icon').classList.add('hidden');
+            
+            renderTabs();
+            renderContent();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- RENDERERS ---
 
         function renderTabs() {
             const tabs = [
                 { id: 'overview', label: 'Tổng Quan' }, { id: 'roadmap', label: 'Lộ Trình' },
                 { id: 'lifecycle', label: 'Vòng Đời' }, { id: 'tools', label: 'Công Cụ' }, { id: 'ai_mentor', label: 'AI Mentor ✨' }
             ];
-            document.getElementById('nav-tabs').innerHTML = tabs.map(t => `<button onclick="setTab('${t.id}')" class="tab-btn px-3 py-2 text-sm font-medium ${state.tab === t.id ? 'text-sky-600 active font-bold' : 'text-slate-500 hover:text-slate-700'}">${t.label}</button>`).join('');
+            
+            // Desktop
+            document.getElementById('nav-tabs-desktop').innerHTML = tabs.map(t => 
+                `<button onclick="setTab('${t.id}')" class="tab-btn px-3 py-2 text-sm font-medium ${state.tab === t.id ? 'text-sky-600 active font-bold' : 'text-slate-500 hover:text-slate-700'}">${t.label}</button>`
+            ).join('');
+
+            // Mobile
+            document.getElementById('nav-tabs-mobile').innerHTML = tabs.map(t => 
+                `<button onclick="setTab('${t.id}')" class="w-full text-left px-4 py-3 rounded-lg text-base font-medium ${state.tab === t.id ? 'bg-sky-50 text-sky-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}">${t.label}</button>`
+            ).join('');
         }
 
-        function renderOverview() {
+        function renderContent() {
             const container = document.getElementById('app-container');
-            container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">${data.overview.roles.map(r => `<div class="bg-white rounded-2xl p-6 border border-${r.color}-border shadow-soft hover:shadow-lg transition-all duration-300 group"><div class="w-12 h-12 rounded-xl bg-${r.color}-light text-${r.color}-DEFAULT flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">${r.icon}</div><h3 class="text-xl font-bold text-slate-900 mb-1">${r.name}</h3><p class="text-xs font-bold text-${r.color}-DEFAULT uppercase tracking-wider mb-3">${r.focus}</p><p class="text-slate-600 text-sm">${r.desc}</p></div>`).join('')}</div>
-                <div class="bg-white rounded-2xl p-8 border border-slate-100 shadow-soft"><h3 class="text-lg font-bold text-slate-800 mb-6 text-center">Kỹ Năng</h3><div class="chart-container max-w-2xl mx-auto h-[350px]"><canvas id="skillRadarChart"></canvas></div></div>`;
+            container.innerHTML = '';
+
+            // Header (Dynamic based on tab)
+            let headerTitle = "Data Career Navigator";
+            let headerDesc = "Hướng dẫn chi tiết từ Zero đến Hero";
+            
+            if(state.tab === 'overview') { headerTitle = "Tổng Quan Ngành"; headerDesc = "Bức tranh toàn cảnh về 3 vị trí cốt lõi."; }
+            else if(state.tab === 'roadmap') { headerTitle = "Lộ Trình Học"; headerDesc = "Các bước đi cụ thể cho từng vị trí."; }
+            else if(state.tab === 'lifecycle') { headerTitle = "Vòng Đời Dữ Liệu"; headerDesc = "Quy trình dữ liệu chảy trong doanh nghiệp."; }
+            else if(state.tab === 'ai_mentor') { headerTitle = "AI Mentor"; headerDesc = "Hỏi đáp thông minh cùng Gemini."; }
+
+            container.innerHTML += `
+                <div class="text-center mb-8">
+                    <h1 class="text-2xl md:text-4xl font-extrabold text-slate-900 mb-2">${headerTitle}</h1>
+                    <p class="text-slate-500 text-sm md:text-base">${headerDesc}</p>
+                </div>
+            `;
+
+            if(state.tab === 'overview') renderOverview(container);
+            else if(state.tab === 'roadmap') renderRoadmap(container);
+            else if(state.tab === 'lifecycle') renderLifecycle(container);
+            else if(state.tab === 'tools') renderTools(container);
+            else if(state.tab === 'ai_mentor') renderAIMentor(container);
+        }
+
+        // 1. OVERVIEW
+        function renderOverview(container) {
+            container.innerHTML += `
+                <div class="space-y-6">
+                    <!-- Cards Stack on Mobile -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        ${data.overview.roles.map(r => `
+                            <div class="bg-white rounded-xl p-5 border border-${r.color}-border shadow-sm flex flex-row md:flex-col gap-4 items-center md:items-start">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-${r.color}-light text-${r.color}-DEFAULT flex items-center justify-center text-2xl">
+                                    ${r.icon}
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900">${r.name}</h3>
+                                    <p class="text-xs font-bold text-${r.color}-DEFAULT uppercase mb-1">${r.focus}</p>
+                                    <p class="text-slate-600 text-xs md:text-sm line-clamp-2 md:line-clamp-none">${r.desc}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <!-- Chart -->
+                    <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-800 mb-4 text-center">Biểu Đồ Kỹ Năng</h3>
+                        <div class="chart-container relative h-[300px] w-full">
+                            <canvas id="skillRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>`;
             setTimeout(initRadarChart, 50);
         }
 
-        function renderRoadmap() {
+        // 2. ROADMAP
+        function renderRoadmap(container) {
             const path = data.roadmap.paths[state.roadmapRole];
             const roleColor = state.roadmapRole === 'DA' ? 'da' : (state.roadmapRole === 'DE' ? 'de' : 'ds');
-            document.getElementById('app-container').innerHTML = `
-                <div class="flex flex-col lg:flex-row gap-8">
-                    <div class="lg:w-1/3 space-y-6"><div class="bg-slate-900 text-white rounded-2xl p-6 shadow-lg"><h3 class="font-bold text-lg mb-4">🏛️ Nền Tảng</h3><div class="space-y-4">${data.roadmap.base.map(b => `<div class="pl-4 border-l-2 border-slate-700"><div class="font-semibold text-sky-300 text-sm">${b.icon} ${b.title}</div><ul class="text-xs text-slate-300 space-y-1">${b.items.map(i => `<li>• ${i}</li>`).join('')}</ul></div>`).join('')}</div></div></div>
-                    <div class="lg:w-2/3">
-                        <div class="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200 mb-8 inline-flex">${['DA', 'DE', 'DS'].map(r => `<button onclick="setRoadmapRole('${r}')" class="px-6 py-2 rounded-lg text-sm font-bold transition-all ${state.roadmapRole === r ? (r === 'DA' ? 'bg-da text-white' : (r === 'DE' ? 'bg-de text-white' : 'bg-ds text-white')) : 'text-slate-500 hover:bg-slate-50'}">${r}</button>`).join('')}</div>
-                        <div class="space-y-0 pl-2">${path.map((step, idx) => `<div class="timeline-item relative flex gap-6 pb-12 timeline-line group"><div class="flex-shrink-0 w-8 h-8 rounded-full border-4 border-white bg-${roleColor}-DEFAULT text-white flex items-center justify-center text-sm font-bold shadow z-10 ring-2 ring-${roleColor}-light group-hover:scale-110 transition-transform">${idx + 1}</div><div class="bg-white flex-1 p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow -mt-2"><h4 class="font-bold text-slate-800 text-lg mb-2">${step.stage}</h4><p class="text-slate-600 text-sm">${step.content}</p></div></div>`).join('')}<div class="flex gap-6 items-center"><div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs">🏁</div><div class="text-slate-400 text-sm italic">Tiếp tục học hỏi...</div></div></div>
+            
+            container.innerHTML += `
+                <div class="flex flex-col gap-8">
+                    <!-- Role Selector (Horizontal Scroll on Mobile) -->
+                    <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+                        ${['DA', 'DE', 'DS'].map(r => `
+                            <button onclick="setRoadmapRole('${r}')" class="flex-shrink-0 px-6 py-2 rounded-full text-sm font-bold border transition-all ${state.roadmapRole === r ? (r === 'DA' ? 'bg-da text-white border-da' : (r === 'DE' ? 'bg-de text-white border-de' : 'bg-ds text-white border-ds')) : 'bg-white text-slate-500 border-slate-200'}">
+                                ${r === 'DA' ? 'Data Analyst' : (r === 'DE' ? 'Data Engineer' : 'Data Scientist')}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- Base Knowledge (Collapsible on Mobile could be better, but stacking is fine) -->
+                    <div class="bg-slate-900 text-white rounded-xl p-5 shadow-lg">
+                        <h3 class="font-bold text-base mb-4 flex items-center gap-2">🏛️ Nền Tảng Chung</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            ${data.roadmap.base.map(b => `
+                                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                    <div class="font-semibold text-sky-300 text-sm mb-1">${b.icon} ${b.title}</div>
+                                    <p class="text-xs text-slate-300">${b.items.join(', ')}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="space-y-0 pl-2">
+                        ${path.map((step, idx) => `
+                            <div class="timeline-item relative flex gap-4 pb-10 timeline-line">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full border-4 border-white bg-${roleColor}-DEFAULT text-white flex items-center justify-center text-xs font-bold shadow z-10 ring-2 ring-${roleColor}-light">
+                                    ${idx + 1}
+                                </div>
+                                <div class="bg-white flex-1 p-4 rounded-xl border border-slate-100 shadow-sm -mt-1">
+                                    <h4 class="font-bold text-slate-800 text-base mb-1">${step.stage}</h4>
+                                    <p class="text-slate-600 text-sm">${step.content}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                         <div class="flex gap-4 items-center">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs">🏁</div>
+                            <div class="text-slate-400 text-sm italic">Thực chiến dự án...</div>
+                        </div>
                     </div>
                 </div>`;
         }
 
-        function renderLifecycle() {
+        // 3. LIFECYCLE
+        function renderLifecycle(container) {
             const step = data.lifecycle[state.lifecycleStepIndex];
             const roleColorMap = { 'DE': 'sky', 'DA': 'orange', 'DS': 'purple' };
             const currentColor = roleColorMap[step.role];
-            document.getElementById('app-container').innerHTML = `
-                <div class="overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide"><div class="flex min-w-[800px] justify-between items-center px-4">${data.lifecycle.map((s, idx) => `<div class="lifecycle-item relative flex flex-col items-center flex-1 cursor-pointer group lifecycle-arrow" onclick="setLifecycleIndex(${idx})"><div class="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold border-2 transition-all duration-300 z-10 bg-white ${idx === state.lifecycleStepIndex ? `border-${roleColorMap[s.role]}-500 text-${roleColorMap[s.role]}-600 bg-${roleColorMap[s.role]}-50 shadow-glow scale-110` : 'border-slate-200 text-slate-300 hover:border-slate-300'}">${s.step}</div><span class="mt-3 text-xs font-bold uppercase tracking-wide ${idx === state.lifecycleStepIndex ? 'text-slate-800' : 'text-slate-400'}">${s.short}</span></div>`).join('')}</div></div>
-                <div class="mt-4 bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden animate-fade-in"><div class="flex flex-col md:flex-row"><div class="p-8 md:w-1/3 bg-slate-50 border-r border-slate-100"><h3 class="text-2xl font-bold text-slate-800 mb-2">${step.title}</h3><p class="text-slate-600 text-sm mb-6">${step.desc}</p><div class="bg-white p-4 rounded-xl border border-slate-200"><h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">💡 Mindset</h4><p class="text-slate-700 italic text-sm">"${step.mindset}"</p></div></div><div class="p-8 md:w-2/3"><h4 class="text-sm font-bold text-slate-800 mb-4">🛠️ Tech Stack</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${step.tech.map(t => `<div class="border border-slate-200 rounded-xl p-4 hover:border-${currentColor}-300 hover:bg-${currentColor}-50 transition-colors"><div class="flex justify-between items-start mb-2"><span class="font-bold text-slate-800">${t.name}</span><span class="text-[10px] px-2 py-0.5 bg-slate-100 rounded text-slate-500">${t.type}</span></div><div class="space-y-2 text-xs"><div class="flex gap-2"><span class="text-green-500">✓</span><span>${t.pros}</span></div><div class="flex gap-2"><span class="text-red-400">✕</span><span>${t.cons}</span></div></div></div>`).join('')}</div></div></div></div>`;
-        }
+            
+            container.innerHTML += `
+                <div class="space-y-6">
+                    <!-- Steps (Horizontal Scrollable) -->
+                    <div class="relative">
+                        <div class="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide flex gap-3 snap-x">
+                            ${data.lifecycle.map((s, idx) => `
+                                <div onclick="setLifecycleIndex(${idx})" class="snap-center flex-shrink-0 w-24 flex flex-col items-center gap-2 cursor-pointer group">
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center font-bold border-2 transition-all ${idx === state.lifecycleStepIndex ? `bg-${roleColorMap[s.role]}-50 text-${roleColorMap[s.role]}-600 border-${roleColorMap[s.role]}-500 scale-110 shadow` : 'bg-white text-slate-300 border-slate-200'}">
+                                        ${s.step}
+                                    </div>
+                                    <span class="text-[10px] font-bold uppercase ${idx === state.lifecycleStepIndex ? 'text-slate-800' : 'text-slate-400'}">${s.short}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="text-center text-xs text-slate-400 mt-[-10px] md:hidden">Vuốt ngang để xem thêm ↔</div>
+                    </div>
 
-        function renderTools() {
-            document.getElementById('app-container').innerHTML = `<div class="grid md:grid-cols-2 gap-8"><div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-soft"><h3 class="font-bold text-xl mb-4">Data Storytelling</h3><div class="space-y-4 text-sm text-slate-600"><p>1. <strong>Context:</strong> Biết người nghe là ai.</p><p>2. <strong>Narrative:</strong> Có mở đầu, cao trào và kết luận.</p><p>3. <strong>Visual:</strong> Đơn giản, tập trung vào insight.</p></div></div><div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-soft"><h3 class="font-bold text-xl mb-4">So Sánh</h3><div class="space-y-4"><div class="text-sm"><strong>ETL vs ELT:</strong> ETL cho hệ thống cũ/bảo mật. ELT cho Cloud/Modern Stack.</div><div class="text-sm"><strong>PowerBI vs Tableau:</strong> PowerBI rẻ, tích hợp tốt Microsoft. Tableau đẹp, linh hoạt.</div></div></div></div>`;
-        }
-
-        function renderAIMentor() {
-            const container = document.getElementById('app-container');
-            container.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[600px]">
-                    <div class="lg:col-span-1 space-y-4">
-                        <div class="bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-2xl p-6 shadow-lg">
-                            <h3 class="text-xl font-bold mb-2">✨ AI Mentor</h3>
-                            <p class="text-indigo-100 text-sm mb-4">Hỏi về lộ trình, dự án Portfolio...</p>
-                            <div class="space-y-2">
-                                <button onclick="triggerAIPrompt('Gợi ý 3 dự án Portfolio cho Data Analyst mảng E-commerce.')" class="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-white/10">💡 Gợi ý Dự án DA</button>
-                                <button onclick="triggerAIPrompt('So sánh Data Lake và Data Warehouse.')" class="w-full text-left px-4 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-white/10">🤔 Lake vs Warehouse?</button>
+                    <!-- Details Card -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 bg-slate-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">${step.title}</h3>
+                                    <span class="text-xs font-bold px-2 py-1 rounded bg-${currentColor}-100 text-${currentColor}-700 mt-1 inline-block">Role: ${step.role}</span>
+                                </div>
+                                <div class="text-3xl opacity-20">
+                                    ${step.role === 'DE' ? '⚙️' : (step.role === 'DA' ? '📊' : '🤖')}
+                                </div>
+                            </div>
+                            <p class="text-slate-600 text-sm mt-3">${step.desc}</p>
+                        </div>
+                        
+                        <div class="p-5">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">🛠️ Tech Stack</h4>
+                            <div class="grid grid-cols-1 gap-3">
+                                ${step.tech.map(t => `
+                                    <div class="border border-slate-100 rounded-lg p-3 bg-white shadow-sm flex justify-between items-center">
+                                        <div>
+                                            <span class="font-bold text-slate-800 text-sm block">${t.name}</span>
+                                            <span class="text-[10px] text-slate-500">${t.type}</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-[10px] text-green-600">✓ ${t.pros}</div>
+                                            <div class="text-[10px] text-red-500">✕ ${t.cons}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-100 text-xs text-yellow-800 italic">
+                                💡 Mindset: "${step.mindset}"
                             </div>
                         </div>
                     </div>
-                    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-soft flex flex-col overflow-hidden">
-                        <div id="ai-chat-box" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
-                            <div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold shadow">AI</div><div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%]"><p class="text-sm text-slate-700">Chào bạn! Tôi có thể giúp gì cho bạn hôm nay?</p></div></div>
-                            ${state.chatHistory.map(msg => `<div class="flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}"><div class="w-8 h-8 rounded-full ${msg.role === 'user' ? 'bg-slate-700' : 'bg-gradient-to-r from-indigo-500 to-purple-500'} flex items-center justify-center text-white text-xs font-bold shadow">${msg.role === 'user' ? 'You' : 'AI'}</div><div class="${msg.role === 'user' ? 'bg-slate-800 text-white' : 'bg-white text-slate-700 border border-slate-100'} p-4 rounded-2xl ${msg.role === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'} shadow-sm max-w-[85%]"><div class="text-sm ${msg.role === 'ai' ? 'ai-response' : ''}">${msg.content}</div></div></div>`).join('')}
-                            <div id="ai-loading" class="hidden flex gap-3"><div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold shadow">AI</div><div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 flex gap-1 items-center"><div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div><div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div><div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div></div></div>
+                </div>`;
+        }
+
+        // 4. TOOLS
+        function renderTools(container) {
+            container.innerHTML += `
+                <div class="flex flex-col gap-6">
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-lg mb-3">Data Storytelling</h3>
+                        <ul class="space-y-3">
+                            <li class="flex gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">1</span>
+                                <span class="text-sm text-slate-600"><strong>Context:</strong> Hiểu rõ người nghe là ai.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">2</span>
+                                <span class="text-sm text-slate-600"><strong>Narrative:</strong> Kể chuyện có mở đầu, cao trào.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">3</span>
+                                <span class="text-sm text-slate-600"><strong>Visual:</strong> Đơn giản, loại bỏ rác (clutter).</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-lg mb-3">So Sánh Nhanh</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm font-semibold text-slate-700 mb-1">ETL vs ELT</div>
+                                <div class="text-xs text-slate-500">ETL an toàn hơn. ELT nhanh & hiện đại hơn (Cloud).</div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm font-semibold text-slate-700 mb-1">PowerBI vs Tableau</div>
+                                <div class="text-xs text-slate-500">PowerBI rẻ, phổ biến. Tableau mạnh về Visual.</div>
+                            </div>
                         </div>
-                        <div class="p-4 bg-white border-t border-slate-100">
-                            <form onsubmit="handleAIChat(event)" class="flex gap-2"><input id="ai-input" type="text" placeholder="Nhập câu hỏi..." class="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"><button type="submit" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-colors">Gửi</button></form>
+                    </div>
+                </div>`;
+        }
+
+        // 5. AI MENTOR
+        function renderAIMentor(container) {
+            container.innerHTML += `
+                <div class="flex flex-col h-[calc(100vh-220px)] md:h-[600px]">
+                    <!-- Mobile Recommendations (Scrollable) -->
+                    <div class="md:hidden flex overflow-x-auto gap-2 pb-4 scrollbar-hide">
+                        <button onclick="triggerAIPrompt('Lộ trình DA cho người trái ngành?')" class="flex-shrink-0 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100 whitespace-nowrap">🗺️ Lộ trình trái ngành</button>
+                        <button onclick="triggerAIPrompt('Gợi ý dự án Portfolio cho DE?')" class="flex-shrink-0 px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-xs font-bold border border-purple-100 whitespace-nowrap">💡 Ý tưởng Dự án</button>
+                        <button onclick="triggerAIPrompt('Giải thích Data Lake dễ hiểu?')" class="flex-shrink-0 px-4 py-2 bg-sky-50 text-sky-700 rounded-full text-xs font-bold border border-sky-100 whitespace-nowrap">🤔 Thuật ngữ</button>
+                    </div>
+
+                    <!-- Desktop Recommendations (Sidebar - Hidden on Mobile) -->
+                    <div class="hidden md:grid grid-cols-3 gap-8 mb-4">
+                        <div class="col-span-1 bg-indigo-600 text-white rounded-xl p-4">
+                            <h3 class="font-bold mb-2">Gợi ý câu hỏi</h3>
+                            <ul class="text-sm space-y-2 text-indigo-100">
+                                <li class="cursor-pointer hover:text-white" onclick="triggerAIPrompt('Gợi ý 3 dự án Portfolio DA')">• Dự án Portfolio</li>
+                                <li class="cursor-pointer hover:text-white" onclick="triggerAIPrompt('So sánh SQL vs NoSQL')">• So sánh công nghệ</li>
+                            </ul>
+                        </div>
+                        <div class="col-span-2"></div>
+                    </div>
+
+                    <!-- Chat Area -->
+                    <div class="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+                        <div id="ai-chat-box" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+                            <div class="flex gap-2">
+                                <div class="w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold">AI</div>
+                                <div class="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[90%] text-sm text-slate-700">
+                                    Chào bạn! Mình là AI Mentor. Bạn cần giúp gì về ngành Data?
+                                </div>
+                            </div>
+                            ${state.chatHistory.map(msg => `
+                                <div class="flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}">
+                                    <div class="w-6 h-6 rounded-full ${msg.role === 'user' ? 'bg-slate-700' : 'bg-gradient-to-r from-indigo-500 to-purple-500'} flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold">
+                                        ${msg.role === 'user' ? 'U' : 'AI'}
+                                    </div>
+                                    <div class="${msg.role === 'user' ? 'bg-slate-800 text-white' : 'bg-white text-slate-700 border border-slate-100'} p-3 rounded-xl ${msg.role === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'} shadow-sm max-w-[90%] text-sm overflow-hidden">
+                                        <div class="${msg.role === 'ai' ? 'ai-response' : ''}">${msg.content}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <div id="ai-loading" class="hidden flex gap-2">
+                                <div class="w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold">AI</div>
+                                <div class="bg-white p-3 rounded-xl rounded-tl-none shadow-sm flex gap-1 items-center">
+                                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></div>
+                                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></div>
+                                    <div class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input -->
+                        <div class="p-3 bg-white border-t border-slate-100">
+                            <form onsubmit="handleAIChat(event)" class="flex gap-2">
+                                <input id="ai-input" type="text" placeholder="Nhập câu hỏi..." class="flex-1 px-4 py-2.5 rounded-full border border-slate-200 focus:outline-none focus:border-indigo-500 text-sm bg-slate-50">
+                                <button type="submit" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center shadow hover:bg-slate-800 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>`;
             setTimeout(() => { const cb = document.getElementById('ai-chat-box'); if(cb) cb.scrollTop = cb.scrollHeight; }, 50);
         }
 
+        // --- HANDLERS ---
         async function handleAIChat(e) {
             e.preventDefault();
             const input = document.getElementById('ai-input');
             const msg = input.value.trim();
             if (!msg) return;
+
             state.chatHistory.push({ role: 'user', content: msg });
-            renderAIMentor();
+            renderContent();
+            
             document.getElementById('ai-loading').classList.remove('hidden');
             const aiText = await callGeminiAPI(msg);
             const fmt = aiText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\* (.*?)\n/g, '<li>$1</li>').replace(/\n/g, '<br>');
+            
             state.chatHistory.push({ role: 'ai', content: fmt });
-            renderAIMentor();
+            renderContent();
         }
 
-        window.triggerAIPrompt = (p) => { document.getElementById('ai-input').value = p; handleAIChat({ preventDefault: () => {} }); };
-        window.setTab = (t) => { state.tab = t; renderTabs(); if(t==='overview') renderOverview(); else if(t==='roadmap') renderRoadmap(); else if(t==='lifecycle') renderLifecycle(); else if(t==='tools') renderTools(); else if(t==='ai_mentor') renderAIMentor(); };
-        window.setRoadmapRole = (r) => { state.roadmapRole = r; setTab('roadmap'); };
-        window.setLifecycleIndex = (i) => { state.lifecycleStepIndex = i; setTab('lifecycle'); };
+        window.triggerAIPrompt = (p) => { 
+            state.chatHistory.push({ role: 'user', content: p });
+            renderContent();
+            handleAIChat({ preventDefault: () => { document.getElementById('ai-input').value = p; } }); 
+        };
         
+        window.setRoadmapRole = (r) => { state.roadmapRole = r; renderContent(); };
+        window.setLifecycleIndex = (i) => { state.lifecycleStepIndex = i; renderContent(); };
+
         function initRadarChart() {
             const ctx = document.getElementById('skillRadarChart');
             if (!ctx) return;
+            // Mobile adjustments for Chart
+            const isMobile = window.innerWidth < 768;
             new Chart(ctx, {
                 type: 'radar',
                 data: {
-                    labels: ['Coding', 'Math', 'Business', 'SQL', 'AI', 'Ops'],
-                    datasets: [{ label: 'DA', data: [30, 60, 90, 80, 20, 10], borderColor: '#ea580c', backgroundColor: 'rgba(234, 88, 12, 0.2)' }, { label: 'DE', data: [90, 30, 40, 90, 20, 90], borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.2)' }, { label: 'DS', data: [70, 95, 60, 60, 95, 30], borderColor: '#9333ea', backgroundColor: 'rgba(147, 51, 234, 0.2)' }]
+                    labels: ['Coding', 'Math', 'Biz', 'SQL', 'AI', 'Ops'],
+                    datasets: [
+                        { label: 'DA', data: [30, 60, 90, 80, 20, 10], borderColor: '#ea580c', backgroundColor: 'rgba(234, 88, 12, 0.2)', borderWidth: 2 },
+                        { label: 'DE', data: [90, 30, 40, 90, 20, 90], borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.2)', borderWidth: 2 },
+                        { label: 'DS', data: [70, 95, 60, 60, 95, 30], borderColor: '#9333ea', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderWidth: 2 }
+                    ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { r: { ticks: { display: false, max: 100 } } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        r: { 
+                            ticks: { display: false, max: 100 },
+                            pointLabels: { font: { size: isMobile ? 10 : 12 } } // Smaller font on mobile
+                        } 
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } }
+                }
             });
         }
-        document.addEventListener('DOMContentLoaded', () => setTab('overview'));
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTabs();
+            renderContent();
+        });
+
     </script>
 </body>
 </html>
