@@ -1,0 +1,15 @@
+{
+  "name": "rabbit-data-career",
+  "version": "1.0.0",
+  "description": "Interactive Data Career Roadmap with AI Mentor",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve public"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
