@@ -81,7 +81,7 @@
         async function callGeminiAPI(prompt) {
             try {
                 // Gọi tới Serverless Function của Vercel tại /api/chat
-                const response = await fetch('/api/chat', {
+                const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: prompt })
